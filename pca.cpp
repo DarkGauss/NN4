@@ -30,34 +30,54 @@ int main(int argc, char *argv[])
     MatrixXd x = data.imageData;
     printf("(size of Image: %i x %i)\n", int(x.rows()), int(x.cols()));
     if(transpose) x.transposeInPlace();
-   
-   
+
     // Mean centering data.
-    VectorXd featureMeans = x.colwise().mean();
+    VectorXd xMeans = x.rowwise().mean();
+    printf("(size of Mean: 1 x %i)\n", int(xMeans.size()));
 
-    printf("(size of Mean: 1 x %i)\n",int(featureMeans.cols()));
-    MatrixXd centered = x.rowwise() - featureMeans;
-     /*
-    //computer cov
-    Eigen::MatrixXf cov = centered.adjoint() * centered;
-    cov = cov / (x.rows() - 1);
+    
+    MatrixXd centered = x.colwise() - xMeans;
 
-    //computer evalues
-    SelfAdjointEigenSolver<MatrixXd> eig(cov);
-    // Normalize eigenvalues to make them represent percentages.
-    VectorXf normalizedEigenValues =  eig.eigenvalues() / eig.eigenvalues().sum();
-    MatrixXd normalizedEigenVectors = eig.eigenvectors();
+    MatrixXd cov = centered.transpose() * centered;
+    cov = cov.array()/int(x.rows()); 
 
-    printf("(size of EigenVectors: %d x %d)\n",int(normalizedEigenVectors.rows()),int(normalizedEigenVectors.cols()));
-    printf("(size of EigenValues: 1 x %d)\n",int(normalizedEigenValues.cols()));
-    debugPrint(normalizedEigenVectors,"normalizedEigenVectors");
+    SelfAdjointEigenSolver<MatrixXd> es(cov);
+    VectorXd e_values = es.eigenvalues();
+    MatrixXd e_vectors = es.eigenvectors();
 
-    if (data.isColor) {
-        data.writeImagePpm("z.ppm", x);
+    e_values.reverseInPlace();
+    MatrixXd row_e_vectors =e_vectors.rowwise().reverse().transpose();
+    VectorXd row_e_values = e_values.head(k);
+    printf("(size of EigenVectors: %i x %i)\n", int(row_e_vectors.rows()), int(row_e_vectors.cols()));
+    printf("(size of EigenValues: 1 x %i)\n", int(row_e_vectors.rows()));
+
+    MatrixXd V;
+    V = row_e_vectors.topRows(k);
+ 
+    MatrixXd encoded = centered * V.transpose();
+    printf("(size of Encoded: %i x %i)\n", int(encoded.rows()), int(encoded.cols()));
+
+    MatrixXd decoded_partial = encoded * V;
+
+    MatrixXd decoded = decoded_partial.colwise() + xMeans;
+
+    if(transpose) decoded.transposeInPlace();
+    if(transpose) x.transposeInPlace();
+
+    printf("(size of Decoded: %i x %i)\n", int(decoded.rows()), int(decoded.cols()));
+
+    //calculate the error
+    MatrixXd Error = x.array() - decoded.array(); 
+    Error = Error.cwiseProduct(Error).eval();
+    double error = Error.sum() / (double(x.cols())*double(x.rows()));
+    printf("Per Pixel Dist^2: %f",error);
+
+    if(data.isColor) {
+        data.writeImagePpm("z.ppm", decoded);
     } else {
-        data.writeImagePgm("z.pgm", x);
+        data.writeImagePgm("z.pgm", decoded);
     }
-    */
+
    return 0;
 }
 
