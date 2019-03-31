@@ -9,7 +9,7 @@ TARNAME=goes1944
 CXX=g++
 
 ##CXXFLAGS=-O3 -Wall   # optimize
-CXXFLAGS= -std=c++11 -ggdb #-Wall # debug
+CXXFLAGS= -std=c++11 -ggdb -Wall # debug
 ##LIBS = -lm
 
 EXAMPLES=

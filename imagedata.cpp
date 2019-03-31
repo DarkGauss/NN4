@@ -1,4 +1,4 @@
-#include "imageData.h"
+#include "imagedata.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>      
@@ -6,7 +6,7 @@
 
 #include<iostream>
 #include<exception>
-#include "Eigen/Core"
+#include"Eigen/Core"
 
 
 
